@@ -1,3 +1,5 @@
+# Assignment 0: Syntax and Semantics of Propositional Logic
+
 Consider the representation of propositions in OCaml as a data type:
 
 type prop = T | F | L of string 

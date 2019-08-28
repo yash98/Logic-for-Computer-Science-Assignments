@@ -1,3 +1,5 @@
+# Assignment 1: Analytic Tableaux
+
 In this assignment, you will implement Analytic Tableaux, which are trees built according to some rules.
 
 A **Node** in a tableau is labelled with  a proposition and the truth value we wish to give it, i.e., as prop * bool.
