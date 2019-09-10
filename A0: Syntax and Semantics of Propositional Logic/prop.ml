@@ -43,18 +43,18 @@ let rec letters (p: prop): string list = lettersEfficient p [];;
 let rec subprop_at_h (p: prop) (sp: prop) (csl: string) (sls: string list): string list = 
   if (p=sp) then csl::sls 
   else match p with 
-  | T -> sls
-  | F -> sls
-  | L(s) -> sls
-  | Not(p1) -> let csl1 = csl^"B" in subprop_at_h p1 sp csl1 sls
-  | And(p1, p2) -> let csl1 = csl^"L" in let f = subprop_at_h p1 sp csl1 sls in 
-    let csl2 = csl^"R" in subprop_at_h p2 sp csl2 f
-  | Or(p1, p2) -> let csl1 = csl^"L" in let f = subprop_at_h p1 sp csl1 sls in 
-    let csl2 = csl^"R" in subprop_at_h p2 sp csl2 f
-  | Impl(p1, p2) -> let csl1 = csl^"L" in let f = subprop_at_h p1 sp csl1 sls in 
-    let csl2 = csl^"R" in subprop_at_h p2 sp csl2 f
-  | Iff(p1, p2) -> let csl1 = csl^"L" in let f = subprop_at_h p1 sp csl1 sls in 
-    let csl2 = csl^"R" in subprop_at_h p2 sp csl2 f;;
+    | T -> sls
+    | F -> sls
+    | L(s) -> sls
+    | Not(p1) -> let csl1 = csl^"B" in subprop_at_h p1 sp csl1 sls
+    | And(p1, p2) -> let csl1 = csl^"L" in let f = subprop_at_h p1 sp csl1 sls in 
+      let csl2 = csl^"R" in subprop_at_h p2 sp csl2 f
+    | Or(p1, p2) -> let csl1 = csl^"L" in let f = subprop_at_h p1 sp csl1 sls in 
+      let csl2 = csl^"R" in subprop_at_h p2 sp csl2 f
+    | Impl(p1, p2) -> let csl1 = csl^"L" in let f = subprop_at_h p1 sp csl1 sls in 
+      let csl2 = csl^"R" in subprop_at_h p2 sp csl2 f
+    | Iff(p1, p2) -> let csl1 = csl^"L" in let f = subprop_at_h p1 sp csl1 sls in 
+      let csl2 = csl^"R" in subprop_at_h p2 sp csl2 f;;
 
 exception NotSubProp;;
 
