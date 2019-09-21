@@ -1,7 +1,7 @@
 type prop = T | F | L of string | Not of prop | And of prop * prop | Or of prop * prop 
           | Impl of prop * prop | Iff of prop * prop;;
 
-type side = L | R
+type side = Lt | R
 and rule = Hyp
          | TrueInt
          | ImplInt of node
@@ -60,13 +60,13 @@ let rec valid_ndprooftree (n: node): bool = match n with
           | _ -> false)
       | AndEli(n1, s) -> (match n1 with 
           | N(pl1, And(p1, p2), r1) -> 
-            if (((s=L) && (p=p1)) || ((s=R) && (p=p2)) && (list_equal pl pl1)) 
+            if (((s=Lt) && (p=p1)) || ((s=R) && (p=p2)) && (list_equal pl pl1)) 
             then valid_ndprooftree n1 else false
           | _ -> false)
       | OrInt(n1, s) -> (match p with 
           | Or(p1, p2) -> (match n1 with 
               | N(pl1, p3, r1) -> 
-                if (((s=L) && (p3=p1)) || ((s=R) && (p3=p2)) && (list_equal pl pl1)) 
+                if (((s=Lt) && (p3=p1)) || ((s=R) && (p3=p2)) && (list_equal pl pl1)) 
                 then valid_ndprooftree n1 else false)
           | _ -> false)
       | OrEli(n1, n2, n3) -> (match n1, n2, n3 with 
@@ -169,78 +169,100 @@ let rec graft_internal (n: node) (nl: node list) (ppl: prop list): node = match 
                                               graft_internal n3 nl (set_push p2 ppl)))
           | _ -> raise InvalidTree));;
 
-(*
-===============================================================================================
-*)
-(*                                             Examples                 
-*)
-(*
-===============================================================================================
-*)
+let graft (n: node) (nl: node list): node = match nl with
+  | nls::nlx -> (match nls with 
+      | N(pl1, p1, r1) -> graft_internal n nl pl1)
+  | [] -> n;;
+
 (* Test cases *)
 
-(* Test Case 1 - LF, II*)
-let a = II(LF([L("x")], L("x")), [], Impl(L("x"),L("x")));;
+(* Test Case 1 - Hyp, TrueInt ImplInt*)
+let a = N([], Impl(L("x"), L("x")), ImplInt(N([L("x")], L("x"), Hyp)));;
 valid_ndprooftree a;;
-let b = pad a ([L("y")]);;
+let b = pad a [L("y")];;
 valid_ndprooftree b;;
 let c = prune b;;
 valid_ndprooftree c;;
 
-(* Test Case 2 - IE, OE*)
-let d = IE(LF( [L("y");Impl(L("y"),L("x"))], Impl(L("y"),L("x"))), LF(
-    [L("y");Impl(L("y"),L("x"))], L("y")),  [L("y");Impl(L("y"),L("x"))],
-           L("x"));;
+(* Test Case 2 - ImplEli, OrEli*)
+let d = N([L("y"); Impl(L("y"), L("x"))], L("x"), 
+          ImplEli(
+            N([L("y"); Impl(L("y"), L("x"))], Impl(L("y"), L("x")), Hyp), 
+            N([L("y"); Impl(L("y"), L("x"))], L("y"), Hyp)));;
+
 valid_ndprooftree d;;
-let e = pad d ([L("z")]);;
+let e = pad d [L("z")];;
 valid_ndprooftree e;;
 let f = prune e;;
 valid_ndprooftree f;;
+
 let gamma1 = [Or(L("p"),L("q")); L("p"); L("q"); Impl(L("p"), L("y"));
               Impl(L("q"), L("y")); Impl(L("p"), L("x"))];;
-let gr = OE(LF(gamma1, Or(L("p"),L("q"))), IE(LF(gamma1, Impl(L("p"),
-                                                              L("y"))), LF(gamma1, L("p")), gamma1, L("y")), IE(LF(gamma1,
-                                                                                                                   Impl(L("q"), L("y"))), LF(gamma1, L("q")), gamma1, L("y")), gamma1,
-            L("y"));;
+let gr = N(gamma1, L("y"), 
+           OrEli(
+             N(gamma1, Or(L("p"),L("q")), Hyp), 
+             N(gamma1, L("y"), ImplEli(N(gamma1, Impl(L("p"), L("y")), Hyp), N(gamma1, L("p"), Hyp))), 
+             N(gamma1, L("y"), ImplEli(N(gamma1, Impl(L("q"), L("y")), Hyp), N(gamma1, L("q"), Hyp)))));;
+
 valid_ndprooftree gr;;
-let gr2 = II(IE(LF((L("y"))::gamma1, Impl(L("p"), L("x"))) , LF(
-    (L("y"))::gamma1, L("p") ), (L("y"))::gamma1, L("x")), gamma1,
-             Impl(L("y"),L("x")));;
+
+let gamma_t = [L("y")]@gamma1;;
+let gr2 = N(gamma1, Impl(L("y"), L("x")), 
+            ImplInt(
+              N(gamma_t, L("x"), ImplEli(
+                  N(gamma_t, Impl(L("p"), L("x")) , Hyp),
+                  N(gamma_t, L("p"), Hyp)
+                ))));;
 let g = graft e [gr;gr2];;
 valid_ndprooftree g;;
 
-(* Test Case 3 - AI, OIL, Tr *)
+(* Test Case 3 - AndInt, OrInt L, TrueInt *)
 let gamma2 = [L("p");L("q")];;
-let h = AI(OIL(LF(gamma2, L("p")), gamma2, Or(L("p"), L("q"))),
-           AI(LF(gamma2, T), LF(gamma2, L("q")), gamma2, And(T, L("q"))), gamma2,
-           And(Or(L("p"), L("q")), And(T, L("q"))));;
+
+let h = N(gamma2, And(Or(L("p"), L("q")), And(T, L("q"))), 
+          AndInt(N(gamma2, Or(L("p"), L("q")), 
+                   OrInt(N(gamma2, L("p"), Hyp), Lt)), 
+                 N(gamma2, And(T, L("q")), 
+                   AndInt(
+                     N(gamma2, T, TrueInt), 
+                     N(gamma2, L("q"), Hyp)
+                   ))));;
+
+
 valid_ndprooftree h;;
 let i = pad h ([L("z")]);;
 valid_ndprooftree i;;
 let j = prune i;;
 valid_ndprooftree j;;
 
-(* Test Case 4 - AEL, AER *)
+(* Test Case 4 - AndELi L, AndEli R *)
 let gamma3 = [And(L("r"),And(L("p"), L("q")))];;
-let k = AEL(AER(LF(gamma3, And(L("r"),And(L("p"), L("q")))), gamma3,
-                And(L("p"), L("q"))), gamma3, L("p"));;
+let k = N(gamma3, L("p"), 
+          AndEli(
+            N(gamma3, And(L("p"), L("q")), 
+              AndEli(N(gamma3, And(L("r"), And(L("p"), L("q"))), Hyp), 
+                     R)), 
+            Lt)
+         );;
+
 valid_ndprooftree k;;
 let l = pad k ([L("z")]);;
 valid_ndprooftree l;;
 let m = prune l;;
 valid_ndprooftree m;;
 
-(* Test Case 5 - OIR,NI *)
+(* Test Case 5 - OrInt R, Int *)
 let gamma4 = [L("p"); Impl(L("p"), F)];;
-let n = OIR(NI(IE(LF(gamma4, Impl(L("p"), F)), LF(gamma4, L("p")),
-                  gamma4, F), gamma4, L("q")), gamma4, Or(L("r"),L("q")));;
+let n = N(gamma4, Or(L("r"), L("q")), 
+          OrInt(N(gamma4, L("q"), 
+                  Int(N(gamma4, F, 
+                        ImplEli(
+                          N(gamma4, Impl(L("p"), F), Hyp),
+                          N(gamma4, L("p"), Hyp)
+                        )))), 
+                R));;
 valid_ndprooftree n;;
 let o = pad n ([L("z")]);;
 valid_ndprooftree o;;
 let p = prune o;;
 valid_ndprooftree p;;
-
-(*
-===============================================================================================
-*)
-
