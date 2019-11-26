@@ -24,9 +24,6 @@ let insert_H (r: robdd) (tr: triple) (u: int) = match r with
 let lookup_T (r: robdd) (u: int): triple = match r with 
   | ROBDD(T_tbl(tt), h, s) -> Array.get tt u;;
 
-(* let add_T (r: robdd) (tr: triple): robdd * int = match r with
-   | ROBDD(T_tbl(tt), h, p, vl, s) -> let i = s+1 in let _ = Array.set tt s tr in ROBDD(T_tbl(tt), h, p, vl, i), i;; *)
-
 let add_T (r: robdd) (tr: triple): int = match r with
   | ROBDD(T_tbl(tt), h, s) -> let _ = Array.set tt !s tr in s := !s + 1; !s -1;;
 
@@ -112,6 +109,25 @@ let restrict (r: robdd) (u0: int) (j: int) (b: int): int =
         (if v<j then mk r v (res(l)) (res(h))
          else (if b=0 then res(l) else res(h))) in
   res u0;;
+
+let allsat (r: robdd) (u0: int) (ordering: string list): ((string * int) list) list = 
+  let rec allsat_h (u: int) (al: (string * int) list) (ala: ((string * int) list) list): ((string * int) list) list = (match u with
+      | 0 -> ala
+      | 1 -> al::ala
+      | _ -> let vlh = lookup_T r u in match vlh with
+        | Trip(v, l, h) -> let ala1 = allsat_h l (((List.nth ordering v), 0)::al) ala in allsat_h h (((List.nth ordering v), 1)::al) ala1) in 
+  allsat_h u0 [] [];;
+
+exception UNSAT;;  
+
+let anysat (r: robdd) (u0: int) (ordering: string list): (string * int) list = 
+  let rec anysat_h (u: int) (al: (string * int) list): (((string * int) list) * bool) = (match u with
+      | 0 -> [], false
+      | 1 -> al, true
+      | _ -> let vlh = lookup_T r u in match vlh with
+        | Trip(v, l, h) -> let al_l, b_l = anysat_h l (((List.nth ordering v), 0)::al) in 
+          (if b_l then al_l, b_l else anysat_h h (((List.nth ordering v), 1)::al))) in 
+  let assign, is_sat = anysat_h u0 [] in if is_sat then assign else raise UNSAT;;
 
 let rec nnf (p: prop): prop = match p with 
   | Not(T) -> F
@@ -213,3 +229,7 @@ let tp1rv31 = restrict global_robdd tp1 2 1;;
 tp1rv31 == tt;;
 
 global_robdd;;
+
+(* Testcase #4 *)
+allsat global_robdd tp1 order;; (* 4 solutions: { {x1 = 0, x2 = 0}, {x1 = 1, x2 = 1}, {x1 = 1, x2 = 0, x3 = 1}, {x1 = 0, x2 = 1, x3 = 1}} *)
+anysat global_robdd tp1 order;; (* any of the above *)
