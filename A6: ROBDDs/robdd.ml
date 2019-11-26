@@ -28,7 +28,7 @@ let lookup_T (r: robdd) (u: int): triple = match r with
    | ROBDD(T_tbl(tt), h, p, vl, s) -> let i = s+1 in let _ = Array.set tt s tr in ROBDD(T_tbl(tt), h, p, vl, i), i;; *)
 
 let add_T (r: robdd) (tr: triple): int = match r with
-  | ROBDD(T_tbl(tt), h, s) -> let _ = Array.set tt !s tr in s := !s + 1; !s;;
+  | ROBDD(T_tbl(tt), h, s) -> let _ = Array.set tt !s tr in s := !s + 1; !s -1;;
 
 let init_robdd (n1: int) (n2: int) (num_vars: int): robdd = 
   let t = init_T n1 in let _ = Array.set t 0 (Trip(num_vars+1, -1, -1)) in let _ = Array.set t 1 (Trip(num_vars+1, -1, -1)) in
@@ -69,6 +69,42 @@ let rec build_internal (r: robdd) (p: prop) (vl: string list) (index: int): int 
     mk r index v0 v1;;
 
 let build (r: robdd) (p: prop) (ordering: string list) = build_internal r p ordering 0;;
+
+type double = Dou of int * int;;
+
+exception UNEXPECTED;;
+
+let oper_helper3 (i: int): bool = if i=0 then false else true;;
+
+let oper_helper2 (b: bool): int = if b then 1 else 0;;
+
+let rec oper_helper1 (u1: bool) (u2: bool) (op: string): bool= match op with
+  | "OR" -> u1 || u2
+  | "AND" -> u1 && u2
+  | "IMPL" -> not(u1) || u2
+  | "IFF" -> (not(u1) || u2) && (not(u2) || u1)
+  | _ -> raise UNEXPECTED;;
+
+let oper (u1: int) (u2: int) (op: string): int = oper_helper2 (oper_helper1 (oper_helper3 u1) (oper_helper3 u2) op);;
+
+let lookup_T_spec (r: robdd) (u: int) (opt: int): int = let ilh = lookup_T r u in match ilh with 
+  | Trip(i, l, h) -> (match opt with
+      | 0 -> i
+      | 1 -> l
+      | _ -> h);;
+
+let rec apply_internal (r: robdd) (u1: int) (u2: int) (op: string) (g: ((double, int) Hashtbl.t)): int = let d = Dou(u1, u2) in
+  if Hashtbl.mem g d then Hashtbl.find g d
+  else (if ((u1 = 0)||(u1 = 1)) && ((u2 = 0)||(u2 = 1)) then let u = oper u1 u2 op in Hashtbl.add g d u; u
+        else 
+          let v1 = lookup_T_spec r u1 0 in let v2 = lookup_T_spec r u2 0 in 
+          let l1 = lookup_T_spec r u1 1 in let l2 = lookup_T_spec r u2 1 in 
+          let h1 = lookup_T_spec r u1 2 in let h2 = lookup_T_spec r u2 2 in 
+          (if v1 = v2 then let u = mk r v1 (apply_internal r l1 l2 op g) (apply_internal r h1 h2 op g) in Hashtbl.add g d u; u 
+           else (if v1 < v2 then let u = mk r v1 (apply_internal r l1 u2 op g) (apply_internal r h1 u2 op g) in Hashtbl.add g d u; u 
+                 else let u = mk r v2 (apply_internal r u1 l2 op g) (apply_internal r u1 h2 op g) in Hashtbl.add g d u; u)));;
+
+let apply (r: robdd) (u1: int) (u2: int) (op: string) = let g = Hashtbl.create ~random:false 999 in apply_internal r u1 u2 op g;;
 
 let rec nnf (p: prop): prop = match p with 
   | Not(T) -> F
@@ -123,7 +159,7 @@ let p2 = Or(vx2,vx3);;
 let np1 = Not(p1);;
 
 let order = ["1"; "2"; "3"];;
-let global_robdd = init_robdd 20 9999 2;;
+let global_robdd = init_robdd 40 9999 2;;
 
 (* compute NNF, CNF of p1 and Not(p1) *)
 
@@ -152,5 +188,11 @@ tp1 == tp1';;
 tp1 == tp1'';;
 tnp1 == tnp1';;
 tnp1 == tnp1'';;
+
+(* Testcase #2 *)
+let tp1anp1 = apply global_robdd tp1 tnp1 "AND";;
+tp1anp1 == tf;;
+let tp1onp1 = apply global_robdd tp1 tnp1 "OR";;
+tp1onp1 == tt;;
 
 global_robdd;;
