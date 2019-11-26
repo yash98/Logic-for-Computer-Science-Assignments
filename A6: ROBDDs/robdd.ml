@@ -65,7 +65,7 @@ let rec build_internal (r: robdd) (p: prop) (vl: string list) (index: int): int 
     let v1 = build_internal r (subst1 p vls true) vlx (index+1) in 
     mk r index v0 v1;;
 
-let build (r: robdd) (p: prop) (ordering: string list) = build_internal r p ordering 0;;
+let build (r: robdd) (p: prop) (ordering: string list) = build_internal r p ordering 1;;
 
 type double = Dou of int * int;;
 
@@ -115,7 +115,7 @@ let allsat (r: robdd) (u0: int) (ordering: string list): ((string * int) list) l
       | 0 -> ala
       | 1 -> al::ala
       | _ -> let vlh = lookup_T r u in match vlh with
-        | Trip(v, l, h) -> let ala1 = allsat_h l (((List.nth ordering v), 0)::al) ala in allsat_h h (((List.nth ordering v), 1)::al) ala1) in 
+        | Trip(v, l, h) -> let ala1 = allsat_h l (((List.nth ordering (v-1)), 0)::al) ala in allsat_h h (((List.nth ordering (v-1)), 1)::al) ala1) in 
   allsat_h u0 [] [];;
 
 exception UNSAT;;  
@@ -203,7 +203,7 @@ let p2 = Or(vx2,vx3);;
 let np1 = Not(p1);;
 
 let order = ["1"; "2"; "3"];;
-let global_robdd = init_robdd 40 9999 2;;
+let global_robdd = init_robdd 40 9999 3;;
 
 (* compute NNF, CNF of p1 and Not(p1) *)
 
@@ -244,16 +244,15 @@ tp1onp1 == tt;;
 global_robdd;;
 
 (* Testcase #3 *)
-let tp1rv30 = restrict global_robdd tp1 2 0;;
+let tp1rv30 = restrict global_robdd tp1 3 0;;
 tp1rv30 == tp0;;
-let tp1rv31 = restrict global_robdd tp1 2 1;;
+let tp1rv31 = restrict global_robdd tp1 3 1;;
 tp1rv31 == tt;;
 
 global_robdd;;
 
 (* Testcase #4 *)
 allsat global_robdd tp1 order;; (* 4 solutions: { {x1 = 0, x2 = 0}, {x1 = 1, x2 = 1}, {x1 = 1, x2 = 0, x3 = 1}, {x1 = 0, x2 = 1, x3 = 1}} *)
-satcount global_robdd tp1;;
 anysat global_robdd tp1 order;; (* any of the above *)
 
 (* Testcase #5 *)
