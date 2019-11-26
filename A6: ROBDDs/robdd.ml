@@ -129,6 +129,17 @@ let anysat (r: robdd) (u0: int) (ordering: string list): (string * int) list =
           (if b_l then al_l, b_l else anysat_h h (((List.nth ordering v), 1)::al))) in 
   let assign, is_sat = anysat_h u0 [] in if is_sat then assign else raise UNSAT;;
 
+let pow a mul n =
+  let rec g p x = function
+    | 0 -> x
+    | i -> g (mul p p) (if i mod 2 = 1 then mul p x else x) (i/2) in
+  g a 1 n;;
+
+let satcount (r: robdd) (u0: int): int = 
+  let rec count (u: int) = let vlh = lookup_T r u in match vlh with | Trip(v, l, h) -> 
+      if u<=1 then u else ((pow 2 ( * ) ((lookup_T_spec r l 0)-v-1))*count(l)) + ((pow 2 ( * ) ((lookup_T_spec r h 0)-v-1))*count(h)) in
+  let v0 = lookup_T_spec r u0 0 in (pow 2 ( * ) (v0-1)) * count(u0);;
+
 let simplify (r: robdd) (d0: int) (u0: int): int = 
   let rec sim (d: int) (u: int): int = let vlh_d = lookup_T r d in let vlh_u = lookup_T r u in 
     match vlh_d with | Trip(v_d, l_d, h_d) -> match vlh_u with | Trip(v_u, l_u, h_u) -> 
@@ -242,6 +253,7 @@ global_robdd;;
 
 (* Testcase #4 *)
 allsat global_robdd tp1 order;; (* 4 solutions: { {x1 = 0, x2 = 0}, {x1 = 1, x2 = 1}, {x1 = 1, x2 = 0, x3 = 1}, {x1 = 0, x2 = 1, x3 = 1}} *)
+satcount global_robdd tp1;;
 anysat global_robdd tp1 order;; (* any of the above *)
 
 (* Testcase #5 *)
