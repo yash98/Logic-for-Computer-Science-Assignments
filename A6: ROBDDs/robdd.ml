@@ -64,8 +64,8 @@ let rec subst1 (p: prop) (v: string) (b: bool): prop = match p with
 
 let rec build_internal (r: robdd) (p: prop) (vl: string list) (index: int): int = match vl with
   | [] -> if truth p then 1 else 0
-  | vls::vlx -> let v0 = build_internal r (subst1 p vls true) vlx (index+1) in 
-    let v1 = build_internal r (subst1 p vls false) vlx (index+1) in 
+  | vls::vlx -> let v0 = build_internal r (subst1 p vls false) vlx (index+1) in 
+    let v1 = build_internal r (subst1 p vls true) vlx (index+1) in 
     mk r index v0 v1;;
 
 let build (r: robdd) (p: prop) (ordering: string list) = build_internal r p ordering 0;;
@@ -105,6 +105,13 @@ let rec apply_internal (r: robdd) (u1: int) (u2: int) (op: string) (g: ((double,
                  else let u = mk r v2 (apply_internal r u1 l2 op g) (apply_internal r u1 h2 op g) in Hashtbl.add g d u; u)));;
 
 let apply (r: robdd) (u1: int) (u2: int) (op: string) = let g = Hashtbl.create ~random:false 999 in apply_internal r u1 u2 op g;;
+
+let restrict (r: robdd) (u0: int) (j: int) (b: int): int = 
+  let rec res (u: int):int = let vlh = lookup_T r u in match vlh with
+    | Trip(v, l, h) -> if v>j then u else 
+        (if v<j then mk r v (res(l)) (res(h))
+         else (if b=0 then res(l) else res(h))) in
+  res u0;;
 
 let rec nnf (p: prop): prop = match p with 
   | Not(T) -> F
@@ -189,10 +196,20 @@ tp1 == tp1'';;
 tnp1 == tnp1';;
 tnp1 == tnp1'';;
 
+global_robdd;;
+
 (* Testcase #2 *)
 let tp1anp1 = apply global_robdd tp1 tnp1 "AND";;
 tp1anp1 == tf;;
 let tp1onp1 = apply global_robdd tp1 tnp1 "OR";;
 tp1onp1 == tt;;
+
+global_robdd;;
+
+(* Testcase #3 *)
+let tp1rv30 = restrict global_robdd tp1 2 0;;
+tp1rv30 == tp0;;
+let tp1rv31 = restrict global_robdd tp1 2 1;;
+tp1rv31 == tt;;
 
 global_robdd;;
