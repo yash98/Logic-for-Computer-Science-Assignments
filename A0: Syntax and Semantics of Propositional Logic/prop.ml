@@ -95,12 +95,12 @@ exception CantConvert;;
 
 let rec cnf_h (p: prop): prop = match p with
   | Or(p1, And(p2, p3)) -> And(cnf_h(Or(p1, p2)), cnf_h(Or(p1, p3)))
-  | Or(And(p1, p2), p3) -> And(cnf_h(Or(p1, p3)), cnf_h(Or(p1, p3)))
+  | Or(And(p1, p2), p3) -> And(cnf_h(Or(p1, p3)), cnf_h(Or(p2, p3)))
   | _ -> p;;
 
 let rec dnf_h (p: prop): prop = match p with
   | And(p1, Or(p2, p3)) -> Or(dnf_h(And(p1, p2)), dnf_h(And(p1, p3)))
-  | And(Or(p1, p2), p3) -> Or(dnf_h(And(p1, p3)), dnf_h(And(p1, p3)))
+  | And(Or(p1, p2), p3) -> Or(dnf_h(And(p1, p3)), dnf_h(And(p2, p3)))
   | _ -> p;;
 
 let rec cnf_i (p: prop): prop = match p with 

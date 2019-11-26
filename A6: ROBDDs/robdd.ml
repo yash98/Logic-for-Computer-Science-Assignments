@@ -6,7 +6,7 @@ type triple = Trip of int*int*int;;
 type t_tbl = T_tbl of (triple) Array.t;;
 type h_tbl = H_tbl of (triple, int) Hashtbl.t;;
 
-type robdd = ROBDD of t_tbl * h_tbl * int;;
+type robdd = ROBDD of t_tbl * h_tbl * int ref;;
 
 let init_T (size: int): triple array = Array.make size (Trip(-1, -1, -1));;
 
@@ -28,11 +28,11 @@ let lookup_T (r: robdd) (u: int): triple = match r with
    | ROBDD(T_tbl(tt), h, p, vl, s) -> let i = s+1 in let _ = Array.set tt s tr in ROBDD(T_tbl(tt), h, p, vl, i), i;; *)
 
 let add_T (r: robdd) (tr: triple): int = match r with
-  | ROBDD(T_tbl(tt), h, s) -> let i = s+1 in let _ = Array.set tt s tr in i;;
+  | ROBDD(T_tbl(tt), h, s) -> let _ = Array.set tt !s tr in s := !s + 1; !s;;
 
 let init_robdd (n1: int) (n2: int) (num_vars: int): robdd = 
   let t = init_T n1 in let _ = Array.set t 0 (Trip(num_vars+1, -1, -1)) in let _ = Array.set t 1 (Trip(num_vars+1, -1, -1)) in
-  let h = init_H n2 in ROBDD(T_tbl(t), H_tbl(h), 2);;
+  let h = init_H n2 in ROBDD(T_tbl(t), H_tbl(h), ref 2);;
 
 let mk (r: robdd) (i: int) (l: int) (h: int): int = 
   if l = h then l
@@ -64,8 +64,8 @@ let rec subst1 (p: prop) (v: string) (b: bool): prop = match p with
 
 let rec build_internal (r: robdd) (p: prop) (vl: string list) (index: int): int = match vl with
   | [] -> if truth p then 1 else 0
-  | vls::vlx -> let v0 = build_internal r (subst1 p vls true) vlx index+1 in 
-    let v1 = build_internal r (subst1 p vls true) vlx index+1 in 
+  | vls::vlx -> let v0 = build_internal r (subst1 p vls true) vlx (index+1) in 
+    let v1 = build_internal r (subst1 p vls false) vlx (index+1) in 
     mk r index v0 v1;;
 
 let build (r: robdd) (p: prop) (ordering: string list) = build_internal r p ordering 0;;
@@ -123,7 +123,7 @@ let p2 = Or(vx2,vx3);;
 let np1 = Not(p1);;
 
 let order = ["1"; "2"; "3"];;
-let global_robdd = init_robdd 20 9999 3;;
+let global_robdd = init_robdd 20 9999 2;;
 
 (* compute NNF, CNF of p1 and Not(p1) *)
 
