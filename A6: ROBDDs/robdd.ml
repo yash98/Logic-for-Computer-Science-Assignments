@@ -129,6 +129,16 @@ let anysat (r: robdd) (u0: int) (ordering: string list): (string * int) list =
           (if b_l then al_l, b_l else anysat_h h (((List.nth ordering v), 1)::al))) in 
   let assign, is_sat = anysat_h u0 [] in if is_sat then assign else raise UNSAT;;
 
+let simplify (r: robdd) (d0: int) (u0: int): int = 
+  let rec sim (d: int) (u: int): int = let vlh_d = lookup_T r d in let vlh_u = lookup_T r u in 
+    match vlh_d with | Trip(v_d, l_d, h_d) -> match vlh_u with | Trip(v_u, l_u, h_u) -> 
+      (if d=0 then 0 
+       else (if u<=1 then u 
+             else (if d=1 then mk r v_u (sim d l_u) (sim d h_u) 
+                   else (if v_d=v_u then (if l_d=0 then sim h_d h_u else (if h_d=0 then sim l_d l_u else mk r v_u (sim l_d l_u) (sim h_d h_u))) 
+                         else (if v_d < v_u then mk r v_d (sim l_d u) (sim h_d u) else mk r v_u (sim d l_u) (sim d h_u)))))) in
+  sim d0 u0;;
+
 let rec nnf (p: prop): prop = match p with 
   | Not(T) -> F
   | Not(F) -> T
@@ -233,3 +243,11 @@ global_robdd;;
 (* Testcase #4 *)
 allsat global_robdd tp1 order;; (* 4 solutions: { {x1 = 0, x2 = 0}, {x1 = 1, x2 = 1}, {x1 = 1, x2 = 0, x3 = 1}, {x1 = 0, x2 = 1, x3 = 1}} *)
 anysat global_robdd tp1 order;; (* any of the above *)
+
+(* Testcase #5 *)
+let tstp2tp1 = simplify global_robdd tp2 tp1;;
+tstp2tp1 == tt;;
+let tstvx1tp1 = simplify global_robdd tvx1 tp1;;
+tstvx1tp1 == tp2;;
+
+global_robdd;;
