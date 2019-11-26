@@ -265,6 +265,24 @@ let n = N(gamma, L("r"), OrEli(
     N(gamma, L("r"), Hyp)
   ));;
 
-find_rpair n;;
-simplify1 n;;
-normalise n;;
+let f1 = find_rpair n;;
+let s = simplify1 n;;
+let f2 = find_rpair s;;
+let nr = normalise n;;
+let b = valid_ndprooftree nr;;
+
+(* shown in demo *)
+
+let g1 = [F];;
+let n1 = N(g1, L "q", ImplEli(
+    N(g1, Impl(L "p", L "q"), ImplInt(
+        N(L("p")::g1, L "q", Int(
+            N(L("p")::g1, F, Hyp)
+          )))), 
+    N(g1, L "p", Int(
+        N(g1, F, Hyp)
+      ))
+  ));;
+let v1 = valid_ndprooftree n1;;
+let r1 = simplify1 n1;;
+let r2 = simplify1 r1;;

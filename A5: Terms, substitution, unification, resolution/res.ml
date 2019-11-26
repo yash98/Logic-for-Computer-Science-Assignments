@@ -191,8 +191,8 @@ let rec resolution (cl: clause list): clause list =
     else next_cl;;
 
 let rec res_is_unsat (cl: clause list): bool = match cl with
-  | [] -> false
-  | cls::clx -> if list_equal cls [] then true else res_is_unsat clx;;
+  | cls::clx -> if list_equal cls [] then true else res_is_unsat clx
+  | [] -> false;;
 
 (* RESOLUTION EXAMPLES *)
 (* Example 1 *)
@@ -257,6 +257,7 @@ let r3 = resolution cl3;;
 let b3 = res_is_unsat r3;;
 
 (* Example 4 *)
+(* shown in demo *)
 let lulu = Node(Sym("lulu", 0), []);;
 let fifi = Node(Sym("fifi", 0), []);;
 
@@ -279,7 +280,7 @@ let l4 = N(t3);;
 let l5 = N(t4);;
 let l6 = P(t5);;
 let l7 = P(t6);;
-let l8 = N(t7);;
+let l8 = P(t7);;
 
 let c1 = [l1];;
 let c2 = [l2; l3];;
@@ -290,6 +291,20 @@ let c5 = [l8];;
 let cl4 = [c1; c2; c3; c4; c5];;
 let r4 = resolution cl4;;
 let b4 = res_is_unsat r4;;
+
+let cr1 = resolve_clause_pair c1 c2 c2 [];;
+let crr1 = [P
+              (Node (Sym ("parent", 2),
+                     [Node (Sym ("lulu", 0), []); Node (Sym ("fifi", 0), [])]))];;
+let cr2 = resolve_clause_pair crr1 c3 c3 [];;
+let crr2 = [P
+              (Node (Sym ("Older", 2),
+                     [Node (Sym ("lulu", 0), []); Node (Sym ("fifi", 0), [])]));
+            N (Node (Sym ("Alive", 1), [Node (Sym ("lulu", 0), [])]))];;
+let cr3 = resolve_clause_pair crr2 c4 c4 [];;
+
+let cr4 = resolve_clause_pair crr2 c5 c5 [];;
+
 
 (* EXAMPLES *)
 let sig1 = Sign [Sym("X",0);Sym("Y",0);Sym("f",1);Sym("g",2);Sym("h",3);Sym("*",2)];;
@@ -313,45 +328,54 @@ let term13 = (Node (Sym("$",2),[V (Var "P");V (Var "Q")]));;
 let term14 = (Node (Sym("$",2),[Node (Sym("2",0),[]); Node (Sym("4",0),[])]));;
 let term15 = (Node (Sym("$",2),[Node (Sym("2",0),[]); Node (Sym("3",0),[])]));;
 
-Printf.printf "(1)check_sig sig1 : %B\n" (check_sig sig1);;
-Printf.printf "(2)check_sig sig2 : %B\n" (check_sig sig2);;
-Printf.printf "(3)check_sig sig3 : %B\n" (check_sig sig3);;
-Printf.printf "(4)check_sig sig4 : %B\n\n" (check_sig sig4);;
+(* let c1 = mgu (V(Var("x"))) (Node(Sym("F", 1), [V(Var("x"))]));; *)
+(* let c2 = mgu (Node(Sym("F", 2), [V(Var("x")), Node(Sym("G", 1), V(Var("Z")))])) (Node(Sym("F", 2), [V(Var("y")), Node(Sym("G", 1), Node(Sym("H", 1), [V(Var("Z"))])])));; *)
 
-Printf.printf "(5)wfterm term1 sig1 : %B\n" (wfterm sig1 term1);;
-Printf.printf "(6)wfterm term2 sig1 : %B\n" (wfterm sig1 term2);;
-Printf.printf "(7)wfterm term7 sig4 : %B\n" (wfterm sig4 term7);;
-Printf.printf "(8)wfterm term8 sig4 : %B\n" (wfterm sig4 term8);;
-Printf.printf "(9)wfterm term9 sig4 : %B\n\n" (wfterm sig4 term9);;
-
-Printf.printf "(10)ht term9 : %d\n" (ht term9);;
-Printf.printf "(11)ht term7 : %d\n" (ht term7);;
-Printf.printf "(12)ht term4 : %d\n" (ht term4);;
-Printf.printf "(13)ht term10 : %d\n" (ht term10);;
-Printf.printf "(14)ht term11 : %d\n\n" (ht term11);;
-
-Printf.printf "(15)size term9 : %d\n" (size term9);;
-Printf.printf "(16)size term7 : %d\n" (size term7);;
-Printf.printf "(17)size term4 : %d\n" (size term4);;
-Printf.printf "(18)size term10 : %d\n" (size term10);;
-Printf.printf "(19)size term11 : %d\n\n" (size term11);;
-
-Printf.printf "(20)vars term9 : ";; (vars term9);; Printf.printf("\n");;
-Printf.printf "(21)vars term7 : ";; (vars term7);; Printf.printf("\n");;
-Printf.printf "(22)vars term4 : ";; (vars term4);; Printf.printf("\n");;
-Printf.printf "(23)vars term10 : ";; (vars term10);; Printf.printf("\n");;
-Printf.printf "(24)vars term11 : ";; (vars term11);; Printf.printf("\n\n");;
+(* shown in demo *)
+let t1 = (Node(Sym("F", 2), [V(Var("X")); Node(Sym("G", 1), [V(Var("Z"))])]));;
+let t2 = (Node(Sym("F", 2), [V(Var("Y")); Node(Sym("G", 1), [Node(Sym("H", 1), [V(Var("Y"))])])]));;
+let c2 = mgu t1 t2;;
 
 
-Printf.printf "(31)mgu term14 term13 : ";; fold_sub (mgu term14 term13);; Printf.printf("\n");;
-Printf.printf "(33)mgu term3  term12 : ";; fold_sub ((mgu term3 term12));; Printf.printf("\n");;
-Printf.printf "(34)mgu term12 term3  : ";; fold_sub ((mgu term12 term3));; Printf.printf("\n\n");;
+(* Printf.printf "(1)check_sig sig1 : %B\n" (check_sig sig1);;
+   Printf.printf "(2)check_sig sig2 : %B\n" (check_sig sig2);;
+   Printf.printf "(3)check_sig sig3 : %B\n" (check_sig sig3);;
+   Printf.printf "(4)check_sig sig4 : %B\n\n" (check_sig sig4);;
 
-Printf.printf "(33.1)subst term12 (mgu term3 term12)  : ";; (subst (mgu term3 term12) term12);; Printf.printf("\n");;
-Printf.printf "(33.2)subst term3  (mgu term3 term12)  : ";; (subst (mgu term3 term12) term3);; Printf.printf("\n\n");;
+   Printf.printf "(5)wfterm term1 sig1 : %B\n" (wfterm sig1 term1);;
+   Printf.printf "(6)wfterm term2 sig1 : %B\n" (wfterm sig1 term2);;
+   Printf.printf "(7)wfterm term7 sig4 : %B\n" (wfterm sig4 term7);;
+   Printf.printf "(8)wfterm term8 sig4 : %B\n" (wfterm sig4 term8);;
+   Printf.printf "(9)wfterm term9 sig4 : %B\n\n" (wfterm sig4 term9);;
 
-Printf.printf "(34.1)subst term12 (mgu term12 term3)  : ";; (subst (mgu term12 term3) term12);; Printf.printf("\n");;
-Printf.printf "(34.2)subst term3  (mgu term12 term3)  : ";; (subst (mgu term12 term3) term3);; Printf.printf("\n\n");;
+   Printf.printf "(10)ht term9 : %d\n" (ht term9);;
+   Printf.printf "(11)ht term7 : %d\n" (ht term7);;
+   Printf.printf "(12)ht term4 : %d\n" (ht term4);;
+   Printf.printf "(13)ht term10 : %d\n" (ht term10);;
+   Printf.printf "(14)ht term11 : %d\n\n" (ht term11);;
+
+   Printf.printf "(15)size term9 : %d\n" (size term9);;
+   Printf.printf "(16)size term7 : %d\n" (size term7);;
+   Printf.printf "(17)size term4 : %d\n" (size term4);;
+   Printf.printf "(18)size term10 : %d\n" (size term10);;
+   Printf.printf "(19)size term11 : %d\n\n" (size term11);;
+
+   Printf.printf "(20)vars term9 : ";; (vars term9);; Printf.printf("\n");;
+   Printf.printf "(21)vars term7 : ";; (vars term7);; Printf.printf("\n");;
+   Printf.printf "(22)vars term4 : ";; (vars term4);; Printf.printf("\n");;
+   Printf.printf "(23)vars term10 : ";; (vars term10);; Printf.printf("\n");;
+   Printf.printf "(24)vars term11 : ";; (vars term11);; Printf.printf("\n\n");;
+
+
+   Printf.printf "(31)mgu term14 term13 : ";; fold_sub (mgu term14 term13);; Printf.printf("\n");;
+   Printf.printf "(33)mgu term3  term12 : ";; fold_sub ((mgu term3 term12));; Printf.printf("\n");;
+   Printf.printf "(34)mgu term12 term3  : ";; fold_sub ((mgu term12 term3));; Printf.printf("\n\n");;
+
+   Printf.printf "(33.1)subst term12 (mgu term3 term12)  : ";; (subst (mgu term3 term12) term12);; Printf.printf("\n");;
+   Printf.printf "(33.2)subst term3  (mgu term3 term12)  : ";; (subst (mgu term3 term12) term3);; Printf.printf("\n\n");;
+
+   Printf.printf "(34.1)subst term12 (mgu term12 term3)  : ";; (subst (mgu term12 term3) term12);; Printf.printf("\n");;
+   Printf.printf "(34.2)subst term3  (mgu term12 term3)  : ";; (subst (mgu term12 term3) term3);; Printf.printf("\n\n");; *)
 
 (* right signature
    let sig_1_right = Sign([Sym("c", 0); Sym("f",1); Sym("d", 2)]);;

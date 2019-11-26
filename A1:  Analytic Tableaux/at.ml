@@ -276,3 +276,17 @@ let rec check_contradiction (p: prop): bool*(((string * bool) list) list) =
 
 let p = Iff(Impl(L("a"), L("b")), Impl(Not(L("b")), Not(L("a"))));;
 let (a, b) = find_assignments (N(V(p, true), Unexamined, [], [], [])) [];;
+(* let p = Impl(Impl(L "p1", Impl(L "p2", L "p3")), Impl(Impl(L "p1", L "p2"), Impl(L "p1", L "p3")));; *)
+(* let p = Iff(L("a"), Not(L("a")));; *)
+(* let p = Impl(L "p", Impl(L "q", L "p"));;
+   let (a, b) = find_assignments (N(V(p, false), Unexamined, [], [], [])) [];; *)
+(* 
+let p1 = Iff(Impl(L("a"), L("b")), Impl(Not(L("b")), Not(L("a"))));;
+let (n, leafAssign) = find_assignments (N(V(p, true), Unexamined, [], [], [])) []
+let b1 = check_tautology p1;;
+let b3 = check_contradiction p1;;
+
+let p2 = Iff(Impl(L("a"), L("b")), Not(Impl(Not(L("b")), Not(L("a")))));;
+let (n, leafAssign) = find_assignments (N(V(p, true), Unexamined, [], [], [])) []
+let b2 = check_contradiction p2;;
+let b4 = check_tautology p2;; *)

@@ -8,20 +8,20 @@ let rec ht (p: prop): int = match p with
   | F -> 0
   | L(s) -> 0
   | Not(p1) -> 1+(ht p1)
-  | And(p1, p2) -> max (ht p1) (ht p2)
-  | Or(p1, p2) -> max (ht p1) (ht p2)
-  | Impl(p1, p2) -> max (ht p1) (ht p2)
-  | Iff(p1, p2) -> max (ht p1) (ht p2);;
+  | And(p1, p2) -> 1 + max (ht p1) (ht p2)
+  | Or(p1, p2) -> 1 + max (ht p1) (ht p2)
+  | Impl(p1, p2) -> 1 + max (ht p1) (ht p2)
+  | Iff(p1, p2) -> 1 + max (ht p1) (ht p2);;
 
 let rec size (p: prop): int = match p with
   | T -> 1
   | F -> 1
   | L(s) -> 1
-  | Not(p1) -> 1+(ht p1)
-  | And(p1, p2) -> (ht p1) + (ht p2)
-  | Or(p1, p2) -> (ht p1) + (ht p2)
-  | Impl(p1, p2) -> (ht p1) + (ht p2)
-  | Iff(p1, p2) -> (ht p1) + (ht p2);;
+  | Not(p1) -> 1 + (size p1)
+  | And(p1, p2) -> 1 + (size p1) + (size p2)
+  | Or(p1, p2) -> 1 + (size p1) + (size p2)
+  | Impl(p1, p2) -> 1 + (size p1) + (size p2)
+  | Iff(p1, p2) -> 1 + (size p1) + (size p2);;
 
 let rec isPresent (sl: string list) (s: string): bool = match sl with
   | [] -> false
@@ -129,7 +129,7 @@ let t1 = And(T, F);;
 let t2 = Or(T, F);;
 let t3 = Impl(t1, t2);;
 let t4 = Iff(t3, t1);;
-let t5 = Iff(Or(t2, t1), And(T, Impl(L("A"), F)));;
+let t5 = Iff(Or(t3, t1), And(T, Impl(L("A"), F)));;
 
 ht t1;;
 ht t2;;
@@ -192,6 +192,26 @@ let truth1 = truth tauto1 (Tbl(h2));;
 let truth1 = truth tauto1 (Tbl(h3));;
 let truth1 = truth tauto1 (Tbl(h4));;
 
+let tauto1 = cnf(Iff(Impl(L("a"), L("b")), Impl(Not(L("b")), Not(L("a")))));;
+let truth1 = truth tauto1 (Tbl(h1));;
+let truth1 = truth tauto1 (Tbl(h2));;
+let truth1 = truth tauto1 (Tbl(h3));;
+let truth1 = truth tauto1 (Tbl(h4));;
+
+
+let tauto1 = dnf(Iff(Impl(L("a"), L("b")), Impl(Not(L("b")), Not(L("a")))));;
+let truth1 = truth tauto1 (Tbl(h1));;
+let truth1 = truth tauto1 (Tbl(h2));;
+let truth1 = truth tauto1 (Tbl(h3));;
+let truth1 = truth tauto1 (Tbl(h4));;
+
+
+let tauto1 = nnf(Iff(Impl(L("a"), L("b")), Impl(Not(L("b")), Not(L("a")))));;
+let truth1 = truth tauto1 (Tbl(h1));;
+let truth1 = truth tauto1 (Tbl(h2));;
+let truth1 = truth tauto1 (Tbl(h3));;
+let truth1 = truth tauto1 (Tbl(h4));;
+
 let tauto2 = Or(L("a"), Not(L("a")));;
 let truth2 = truth tauto2 (Tbl(h1));;
 let truth2 = truth tauto2 (Tbl(h2));;
@@ -199,6 +219,24 @@ let truth2 = truth tauto2 (Tbl(h3));;
 let truth2 = truth tauto2 (Tbl(h4));;
 
 let contra1 = Iff(And(L("a"), L("b")), Or(Not(L("a")), Not(L("b"))));;
+let truth3 = truth contra1 (Tbl(h1));;
+let truth3 = truth contra1 (Tbl(h2));;
+let truth3 = truth contra1 (Tbl(h3));;
+let truth3 = truth contra1 (Tbl(h4));;
+
+let contra1 = cnf(Iff(And(L("a"), L("b")), Or(Not(L("a")), Not(L("b")))));;
+let truth3 = truth contra1 (Tbl(h1));;
+let truth3 = truth contra1 (Tbl(h2));;
+let truth3 = truth contra1 (Tbl(h3));;
+let truth3 = truth contra1 (Tbl(h4));;
+
+let contra1 = dnf(Iff(And(L("a"), L("b")), Or(Not(L("a")), Not(L("b")))));;
+let truth3 = truth contra1 (Tbl(h1));;
+let truth3 = truth contra1 (Tbl(h2));;
+let truth3 = truth contra1 (Tbl(h3));;
+let truth3 = truth contra1 (Tbl(h4));;
+
+let contra1 = nnf(Iff(And(L("a"), L("b")), Or(Not(L("a")), Not(L("b")))));;
 let truth3 = truth contra1 (Tbl(h1));;
 let truth3 = truth contra1 (Tbl(h2));;
 let truth3 = truth contra1 (Tbl(h3));;
@@ -215,6 +253,27 @@ let truth5 = truth conti1 (Tbl(h1));;
 let truth5 = truth conti1 (Tbl(h2));;
 let truth5 = truth conti1 (Tbl(h3));;
 let truth5 = truth conti1 (Tbl(h4));;
+
+let conti1 = cnf(Impl(L("a"), Not(Impl(L("b"), L("a")))));;
+let truth5 = truth conti1 (Tbl(h1));;
+let truth5 = truth conti1 (Tbl(h2));;
+let truth5 = truth conti1 (Tbl(h3));;
+let truth5 = truth conti1 (Tbl(h4));;
+
+let conti1 = dnf(Impl(L("a"), Not(Impl(L("b"), L("a")))));;
+let truth5 = truth conti1 (Tbl(h1));;
+let truth5 = truth conti1 (Tbl(h2));;
+let truth5 = truth conti1 (Tbl(h3));;
+let truth5 = truth conti1 (Tbl(h4));;
+
+let conti1 = nnf(Impl(L("a"), Not(Impl(L("b"), L("a")))));;
+let truth5 = truth conti1 (Tbl(h1));;
+let truth5 = truth conti1 (Tbl(h2));;
+let truth5 = truth conti1 (Tbl(h3));;
+let truth5 = truth conti1 (Tbl(h4));;
+
+
+
 
 let conti2 = Or(L("a"), L("b"));;
 let truth6 = truth conti2 (Tbl(h1));;

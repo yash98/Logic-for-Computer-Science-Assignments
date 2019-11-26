@@ -177,12 +177,15 @@ let graft (n: node) (nl: node list): node = match nl with
 (* Test cases *)
 
 (* Test Case 1 - Hyp, TrueInt ImplInt*)
-let a = N([], Impl(L("x"), L("x")), ImplInt(N([L("x")], L("x"), Hyp)));;
+let a = N([L("y"); L("x")], Impl(L("y"), L("x")), ImplInt(N([L("y"); L("x")], L("x"), Hyp)));;
 valid_ndprooftree a;;
-let b = pad a [L("y")];;
+let b = pad a [L("y"); L("z")];;
 valid_ndprooftree b;;
 let c = prune b;;
 valid_ndprooftree c;;
+
+let z = N([L("z"); L("x")], L("x"), Hyp);;
+let y = graft a [z];;
 
 (* Test Case 2 - ImplEli, OrEli*)
 let d = N([L("y"); Impl(L("y"), L("x"))], L("x"), 

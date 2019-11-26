@@ -15,7 +15,7 @@ let rec v_nodes_acc_to_gamma (n: node) (pl: prop list): bool = match n with
   | N(p1, Ass) -> (is_present p1 pl)
   | N(Impl(p1, Impl(p2, p3)), K) -> if (p1=p3) then true else false
   | N(Impl(Impl(p1, Impl(p2, p3)), Impl(Impl(p4, p5), Impl(p6, p7))), S) ->
-    if (p1=p4) && (p1=p6) && (p2=p7) && (p3=p5) then true else false
+    if (p1=p4) && (p1=p6) && (p2=p5) && (p3=p7) then true else false
   | N(Impl(Impl(Not(p1), Not(p2)), Impl(Impl(Not(p3), p4), p5)), R) ->
     if (p1=p3) && (p1=p5) && (p2=p4) then true else false
   | N(p1, MP(n1, n2)) -> (match n1, n2 with 
@@ -91,3 +91,76 @@ let rec dedthm_internal (n: node) (p: prop) (pl: prop list): node = match n with
 let dedthm (pr: hsproof) (p: prop): hsproof = match pr with 
   | P(n, G(pl)) -> 
     let rem_p_pl = (remove_from_list p pl []) in P((dedthm_internal n p rem_p_pl), G(rem_p_pl));;
+
+(* EXAMPLES *)
+let g = G([]);;
+let p = Impl(L("p"), L("p"));;
+let q = Impl(L("p"), Impl(L("q"), L("p")));;
+let r = Impl(L("p"), Impl(Impl(L("q"), L("p")), L("p")));;
+let n = N(p, 
+          MP(N(Impl(q, p), 
+               MP(N(Impl(r, Impl(q, p)), S), 
+                  N(r, K))), 
+             N(q, K)));;
+let h = P(n, g);;
+
+let b = valid_hprooftree h;;
+
+let n1 = N(p, 
+           MP(N(Impl(q, p), 
+                MP(N(Impl(r, Impl(L "q", p)), S), 
+                   N(r, K))), 
+              N(q, K)));;
+let h1 = P(n1, g);;
+
+let b1 = valid_hprooftree h1;;
+
+
+
+let g = G([T; And(L "a",L "b"); L "p"]);;
+let p1 = Impl(L "p", L "p");;
+let p2 = Impl(L "p", Impl(L "r", L "p"));;
+let p3 = Impl(p2, p1);;
+let p4 = Impl(L "p", Impl(Impl(L "r", L "p") ,L "p"));;
+let p5 = Impl(p4,p3);;
+(* let hpt = MP(gamma, p1, MP(gamma,p3, Leaf(gamma,p5), Leaf(gamma,p4)), Leaf(gamma,p2));; *)
+let hpt = P(N(p1, 
+              MP(
+                N(p3, 
+                  MP(
+                    N(p5, S), 
+                    N(p4, K)
+                  )), 
+                N(p2, K))), g);;
+
+let g = G([p4; L "a"; p2]);;
+let hpt = P(N(p1, 
+              MP(
+                N(p3, 
+                  MP(
+                    N(p5, S), 
+                    N(p4, Ass)
+                  )), 
+                N(p2, Ass))), g);;
+let hpt1 = prune hpt;;
+
+let hpt1 = graft hpt [P(N(p4, K), G([])); P(N(p2, K), G([]))];;
+(* let hpt2 = MP([], p1, MP([],p3, Leaf([],p5), Leaf([],p4)), Leaf([],p2));; *)
+let hpt2 = P(N(p1, 
+               MP(
+                 N(p3, 
+                   MP(
+                     N(p5, S), 
+                     N(p4, K)
+                   )), 
+                 N(p2, K)
+               )), G([]));;
+
+
+valid_hprooftree hpt;;
+
+let g1 = G([L "p"]);;
+let hpft1 = P(N(L "p", Ass), g1);;
+let x = dedthm hpft1 (L "p");;
+valid_hprooftree x;;
+
